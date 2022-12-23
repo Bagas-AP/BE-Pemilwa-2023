@@ -152,17 +152,98 @@ func main() {
 
 	// Gin Framework
 	gin.SetMode(os.Getenv("GIN_MODE"))
-	router := gin.Default()
-	router.Use(cORS())
-	router.GET("/ping", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
+	r := gin.Default()
+	r.Use(cORS())
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
 			"message": "alive",
 		})
 	})
-	router.POST("/auth", func(ctx *gin.Context) {
+	
+	// api untuk add senat baru
+	r.POST("/post-senat", func(c *gin.Context) {
+		var inputSenat model.CalonSenat
+
+		err := c.BindJSON(&inputSenat)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H {
+				"message": "format input tidak valid",
+				"error": err.Error(),
+				"success": false,
+				"statusCode": http.StatusBadRequest,
+			})
+			return
+		}
+
+		newSenat := model.CalonSenat {
+			NamaSenat: inputSenat.NamaSenat,
+			Foto: inputSenat.Foto,
+		}
+
+		if err := db.Create(&newSenat); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "failed when creating a new data user",
+				"success": false,
+				"error":   err.Error.Error(),
+				"statusCode": http.StatusInternalServerError,
+			})
+			return
+		}
+
+		c.JSON(http.StatusCreated, gin.H {
+			"message": "successfully add new data",
+			"error": nil,
+			"data": newSenat.NamaSenat,
+			"statusCode": http.StatusCreated,
+		})
+	})
+
+	// api untuk get detail user by id
+	r.GET("/get-detail/:id", func(c *gin.Context) {
+		id, _ := c.Params.Get("id")
+
+		var getUser model.Users
+
+		if err := db.Preload("CalonSenat").Preload("CalonKepala").Where("id = ?", id).Take(&getUser); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "failed get detail data",
+				"success": false,
+				"error":   err.Error.Error(),
+				"statusCode": http.StatusInternalServerError,
+			})
+			return
+		}
+
+		// type DetailUser struct {
+		// 	NIM string
+		// 	Nama string
+		// 	Foto string
+		// 	IsVote bool
+		// 	NamaSenat string
+		// 	NamaKepala string
+		// }
+
+		// getDetail := DetailUser {
+		// 	NIM: getUser.NIM,
+		// 	Nama: getUser.Nama,
+		// 	Foto: getUser.Foto,
+		// 	IsVote: getUser.IsVote,
+		// 	NamaSenat: getUser.CalonSenat.Nama,
+		// 	NamaKepala: getUser.CalonKepala.Nama,
+		// }
+
+		c.JSON(http.StatusOK, gin.H {
+			"message": "successfully add new data",
+			"error": nil,
+			"data": getUser,
+			"statusCode": http.StatusOK,
+		})
+	})
+	r.POST("/auth", func(c *gin.Context) {
 		user := NewUser()
 		var input mahasiswa
-		err := ctx.ShouldBindJSON(&input)
+		err := c.ShouldBindJSON(&input)
 		if err != nil {
 			log.Println(err.Error())
 			return
@@ -186,13 +267,13 @@ func main() {
 			log.Println(err.Error())
 			return
 		}
-		type Data struct {
-			NIM          string
-			Nama         string
-			Fakultas     string
-			ProgramStudi string
-			FotoProfile  string
-		}
+		// type Data struct {
+		// 	NIM          string
+		// 	Nama         string
+		// 	Fakultas     string
+		// 	ProgramStudi string
+		// 	FotoProfile  string
+		// }
 
 		//var data = Data{
 		//	NIM:          user.Account.NIM,
@@ -202,7 +283,7 @@ func main() {
 		//	FotoProfile:  fmt.Sprintf("https://siakad.ub.ac.id/dirfoto/foto/foto_20%s/%s.jpg", user.Account.NIM[0:2], user.Account.NIM),
 		//}
 
-		//ctx.JSON(200, gin.H{
+		//c.JSON(200, gin.H{
 		//	"success": true,
 		//	"data":    data,
 		//})
@@ -217,7 +298,7 @@ func main() {
 		}
 
 		if err := db.Create(&save); err.Error != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Something went wrong with user creation",
 				"error":   err.Error.Error(),
@@ -225,14 +306,14 @@ func main() {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"message": "User created successfully",
 			"data":    save,
 		})
 
 	})
-	if err := router.Run(":8081"); err != nil {
+	if err := r.Run(":8081"); err != nil {
 		log.Fatal(err.Error())
 		return
 	}
