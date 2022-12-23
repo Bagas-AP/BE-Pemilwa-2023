@@ -2,11 +2,14 @@ package main
 
 import (
 	"TestVote/database"
+	"TestVote/model"
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gin-gonic/gin"
@@ -190,20 +193,46 @@ func main() {
 			ProgramStudi string
 			FotoProfile  string
 		}
-		var data = Data{
-			NIM:          user.Account.NIM,
-			Nama:         user.Account.Nama,
-			Fakultas:     user.Account.Fakultas,
-			ProgramStudi: user.Account.ProgramStudi,
-			FotoProfile:  fmt.Sprintf("https://siakad.ub.ac.id/dirfoto/foto/foto_20%s/%s.jpg", user.Account.NIM[0:2], user.Account.NIM),
+
+		//var data = Data{
+		//	NIM:          user.Account.NIM,
+		//	Nama:         user.Account.Nama,
+		//	Fakultas:     user.Account.Fakultas,
+		//	ProgramStudi: user.Account.ProgramStudi,
+		//	FotoProfile:  fmt.Sprintf("https://siakad.ub.ac.id/dirfoto/foto/foto_20%s/%s.jpg", user.Account.NIM[0:2], user.Account.NIM),
+		//}
+
+		//ctx.JSON(200, gin.H{
+		//	"success": true,
+		//	"data":    data,
+		//})
+
+		//var input model.Users
+		save := model.Users{
+			NIM:       user.Account.NIM,
+			Nama:      user.Account.Nama,
+			Foto:      fmt.Sprintf("https://siakad.ub.ac.id/dirfoto/foto/foto_20%s/%s.jpg", user.Account.NIM[0:2], user.Account.NIM),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 
-		ctx.JSON(200, gin.H{
+		if err := db.Create(&save); err.Error != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong with user creation",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"data":    data,
+			"message": "User created successfully",
+			"data":    save,
 		})
+
 	})
-	if err := router.Run(":5000"); err != nil {
+	if err := router.Run(":8081"); err != nil {
 		log.Fatal(err.Error())
 		return
 	}
