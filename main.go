@@ -369,6 +369,7 @@ func main() {
 		mahasiswa := model.Users{
 			CalonKepalaID: input.CalonKepalaID,
 			CalonSenatID:  input.CalonSenatID,
+			UpdatedAt:     time.Now(),
 		}
 
 		result := db.Where("id = ?", ID).Model(&mahasiswa).Updates(mahasiswa)
@@ -398,9 +399,12 @@ func main() {
 			return
 		}
 		c.JSON(http.StatusCreated, gin.H{
-			"success": true,
-			"message": "successfully updated data.",
-			"data":    mahasiswa,
+			"success":      true,
+			"message":      "successfully updated data.",
+			"NIM":          mahasiswa.NIM,
+			"Nama":         mahasiswa.Nama,
+			"Calon Kepala": mahasiswa.CalonKepalaID,
+			"Calon Senat":  mahasiswa.CalonSenatID,
 		})
 	})
 
