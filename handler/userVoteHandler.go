@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// api untuk melakukan vote bagi user
 func Vote(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 	r.POST("/vote", middleware.Authorization(), func(c *gin.Context) {

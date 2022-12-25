@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// api untuk user login via siam, mendapatkan token jwt, dan menyimpan data user ke database
 func Login(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 	r.POST("/login", func(c *gin.Context) {
