@@ -127,6 +127,7 @@ func main() {
 		})
 	})
 
+	// pengelompokan api serta fungsinya
 	r.Group("/api")
 	handler.Login(db, r)
 	handler.Vote(db, r)
