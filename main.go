@@ -4,11 +4,12 @@ import (
 	"TestVote/database"
 	"TestVote/handler"
 	"TestVote/model"
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 var cORS = func() gin.HandlerFunc {
@@ -131,6 +132,8 @@ func main() {
 	r.Group("/api")
 	handler.Login(db, r)
 	handler.Vote(db, r)
+	handler.AdminUser(db, r)
+	handler.AdminKepala(db, r)
 
 	if err := r.Run(":8081"); err != nil {
 		log.Fatal(err.Error())
