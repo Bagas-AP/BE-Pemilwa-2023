@@ -5,6 +5,7 @@ import (
 	"TestVote/model"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -133,7 +134,7 @@ func AdminUser(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// update mahasiswa by id
-	r.PUT("/admin/mahasiswa/:id", middleware.Authorization(), func(c *gin.Context) {
+	r.PATCH("/admin/mahasiswa/:id", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
 
 		var user model.Users
@@ -185,7 +186,43 @@ func AdminUser(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if err := db.Model(&mahasiswa).Updates(input).Error; err != nil {
+		//if input.CalonKepalaID == nil || input.CalonSenatID == nil || *input.CalonKepalaID > 2 || *input.CalonSenatID > 2 {
+		//	c.JSON(http.StatusBadRequest, gin.H{
+		//		"success": false,
+		//		"message": "input is invalid",
+		//		"error":   "calon kepala dan calon senat tidak boleh kosong",
+		//	})
+		//	return
+		//}
+
+		var temp bool
+
+		if input.CalonKepalaID == nil && input.CalonSenatID == nil {
+			temp = false
+		} else if input.CalonKepalaID != nil || input.CalonSenatID != nil {
+			temp = false
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "Dilarang iseng mengubah data!!!",
+			})
+		} else {
+			temp = true
+		}
+
+		update := model.Users{
+			ID:            mahasiswa.ID,
+			Nama:          mahasiswa.Nama,
+			NIM:           mahasiswa.NIM,
+			Foto:          mahasiswa.Foto,
+			IsVote:        temp,
+			ISAdmin:       mahasiswa.ISAdmin,
+			Prodi:         mahasiswa.Prodi,
+			Tahun:         mahasiswa.Tahun,
+			UpdatedAt:     time.Now(),
+			CalonKepalaID: input.CalonKepalaID,
+			CalonSenatID:  input.CalonSenatID,
+		}
+
+		if err := db.Select("*").Model(&mahasiswa).Updates(update).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when updating the database.",

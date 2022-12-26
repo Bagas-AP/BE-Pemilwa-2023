@@ -7,10 +7,12 @@ type Users struct {
 	NIM           string      `gorm:"uniqueIndex" json:"nim"`
 	Nama          string      `json:"nama"`
 	Foto          string      `json:"foto"`
+	Tahun         string      `json:"tahun"`
+	Prodi         string      `json:"prodi"`
 	IsVote        bool        `gorm:"default:false" json:"isVote"`
 	ISAdmin       bool        `gorm:"default:false" json:"isAdmin"`
-	CalonKepalaID int         `gorm:"default:null" json:"calonKepala"`
-	CalonSenatID  int         `gorm:"default:null" json:"calonSenat"`
+	CalonKepalaID *int        `gorm:"default:null" json:"calonKepala"`
+	CalonSenatID  *int        `gorm:"default:null" json:"calonSenat"`
 	WaktuVote     time.Time   `json:"waktuVote"`
 	CreatedAt     time.Time   `json:"createdAt"`
 	UpdatedAt     time.Time   `json:"updatedAt"`

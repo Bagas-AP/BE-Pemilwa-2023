@@ -71,7 +71,7 @@ func AdminKepala(db *gorm.DB, q *gin.Engine) {
 		godotenv.Load("../.env")
 		newKepala := model.CalonKepala{
 			Nama: c.PostForm("nama"),
-			Foto: os.Getenv("BASE_URL") + "/api/admin/news/" + file.Filename,
+			Foto: os.Getenv("BASE_URL") + "/api/admin/kepala/" + file.Filename,
 		}
 
 		if err := db.Create(&newKepala); err.Error != nil {
@@ -278,7 +278,7 @@ func AdminKepala(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk menghapus data kepala by id
-	r.DELETE("/admin/news/:id", middleware.Authorization(), func(c *gin.Context) {
+	r.DELETE("/admin/kepala/:id", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
 
 		var user model.Users

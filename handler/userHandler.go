@@ -23,6 +23,16 @@ func Login(db *gorm.DB, q *gin.Engine) {
 			log.Println(err.Error())
 			return
 		}
+
+		x := input.Nim[5:8]
+		if x != "020" && x != "030" && x != "021" && x != "031" {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "NIM anda tidak valid!",
+			})
+			return
+		}
+
 		err = user.Login(input.Nim, input.Password)
 		if err != nil {
 			log.Println(err.Error())
@@ -39,10 +49,26 @@ func Login(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
+		var save model.Users
+
+		// setting tahun
+		var temp string
+		if user.Account.NIM[0:2] == "19" {
+			temp = "2019"
+		} else if user.Account.NIM[0:2] == "20" {
+			temp = "2020"
+		} else if user.Account.NIM[0:2] == "21" {
+			temp = "2021"
+		} else if user.Account.NIM[0:2] == "22" {
+			temp = "2022"
+		}
+
 		//var input model.Users
-		save := model.Users{
+		save = model.Users{
 			NIM:       user.Account.NIM,
 			Nama:      user.Account.Nama,
+			Prodi:     user.Account.ProgramStudi,
+			Tahun:     temp,
 			Foto:      fmt.Sprintf("https://siakad.ub.ac.id/dirfoto/foto/foto_20%s/%s.jpg", user.Account.NIM[0:2], user.Account.NIM),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),

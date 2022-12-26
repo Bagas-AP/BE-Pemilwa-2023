@@ -15,8 +15,8 @@ func Vote(db *gorm.DB, q *gin.Engine) {
 		ID, _ := c.Get("id")
 
 		type vote struct {
-			CalonKepalaID int `gorm:"default:null" json:"calonKepala"`
-			CalonSenatID  int `gorm:"default:null" json:"calonSenat"`
+			CalonKepalaID *int `gorm:"default:null" json:"calonKepala"`
+			CalonSenatID  *int `gorm:"default:null" json:"calonSenat"`
 		}
 
 		var input vote
@@ -30,7 +30,7 @@ func Vote(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if input.CalonKepalaID == 0 || input.CalonSenatID == 0 || input.CalonKepalaID > 2 || input.CalonSenatID > 2 {
+		if input.CalonKepalaID == nil || input.CalonSenatID == nil || *input.CalonKepalaID > 2 || *input.CalonSenatID > 2 {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "input is invalid",
@@ -63,6 +63,7 @@ func Vote(db *gorm.DB, q *gin.Engine) {
 			IsVote:        true,
 			CalonKepalaID: input.CalonKepalaID,
 			CalonSenatID:  input.CalonSenatID,
+			WaktuVote:     time.Now(),
 			UpdatedAt:     time.Now(),
 		}
 
