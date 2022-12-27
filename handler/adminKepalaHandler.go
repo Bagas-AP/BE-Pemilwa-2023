@@ -3,6 +3,8 @@ package handler
 import (
 	"TestVote/middleware"
 	"TestVote/model"
+	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -18,127 +20,64 @@ func AdminKepala(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 
 	// create calon kepala
-	r.POST("/admin/kepala", middleware.Authorization(), func(c *gin.Context) {
-		ID, _ := c.Get("id")
-
-		var user model.Users
-		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"message": "Something went wrong",
-				"error":   err.Error.Error(),
-			})
+	r.POST("/admin/loginKepala", middleware.Authorization(), func(c *gin.Context) {
+		user := NewUser()
+		var input Mahasiswa
+		err := c.ShouldBindJSON(&input)
+		if err != nil {
+			log.Println(err.Error())
 			return
 		}
 
-		if !user.ISAdmin {
+		x := input.Nim[5:8]
+
+		if x != "020" && x != "030" && x != "021" && x != "031" {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "unauthorized access :(",
-				"error":   nil,
+				"message": "NIM anda tidak valid!",
 			})
 			return
 		}
 
-		file, err := c.FormFile("image")
+		err = user.Login(input.Nim, input.Password)
+
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"error":   "get form err: " + err.Error(),
-			})
+			log.Println(err.Error())
 			return
 		}
 
-		rand.Seed(time.Now().Unix())
-
-		str := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-		shuff := []rune(str)
-
-		rand.Shuffle(len(shuff), func(i, j int) {
-			shuff[i], shuff[j] = shuff[j], shuff[i]
-		})
-		file.Filename = string(shuff)
-
-		if err := c.SaveUploadedFile(file, "./Images/"+file.Filename); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"Success": false,
-				"error":   "upload file err: " + err.Error(),
-			})
+		err = user.GetData()
+		if err != nil {
+			log.Println(err.Error())
 			return
 		}
 
-		godotenv.Load("../.env")
-		newKepala := model.CalonKepala{
-			Nama: c.PostForm("nama"),
-			Foto: os.Getenv("BASE_URL") + "/api/admin/kepala/" + file.Filename,
+		err = user.Logout()
+		if err != nil {
+			log.Println(err.Error())
+			return
 		}
 
-		if err := db.Create(&newKepala); err.Error != nil {
+		save := model.CalonKepala{
+			Nama: user.Account.Nama,
+			Foto: fmt.Sprintf("https://siakad.ub.ac.id/dirfoto/foto/foto_20%s/%s.jpg", user.Account.NIM[0:2], user.Account.NIM),
+		}
+
+		if err := db.Create(&save); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
-				"message": "error when inserting a new kepala",
+				"message": "Something went wrong with user creation",
 				"error":   err.Error.Error(),
 			})
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"message": "a new group has successfully created",
-			"error":   nil,
-			"nama":    newKepala.Nama,
+			"message": "Welcome, here's your token. don't lose it ;)",
+			"data":    save,
 		})
-
-		// get all calon kepala
-		r.GET("/admin/kepala", middleware.Authorization(), func(c *gin.Context) {
-			ID, _ := c.Get("id")
-
-			var user model.Users
-			if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"success": false,
-					"message": "Something went wrong",
-					"error":   err.Error.Error(),
-				})
-				return
-			}
-
-			if !user.ISAdmin {
-				c.JSON(http.StatusForbidden, gin.H{
-					"success": false,
-					"message": "unauthorized access :(",
-					"error":   nil,
-				})
-				return
-			}
-			var kepala []model.CalonKepala
-
-			if result := db.Find(&kepala); result.Error != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"success": false,
-					"message": "Error when querying the database.",
-					"error":   result.Error.Error(),
-				})
-				return
-			}
-
-			var ret []model.CalonKepala
-
-			for _, value := range kepala {
-				var temp model.CalonKepala
-				temp.IDKepala = value.IDKepala
-				temp.Nama = value.Nama
-				temp.Foto = value.Foto
-				ret = append(ret, temp)
-			}
-			c.JSON(http.StatusOK, gin.H{
-				"success": true,
-				"message": "query completed.",
-				"data":    ret,
-			})
-		})
-
+		return
 	})
 
 	// get calon kepala by id
@@ -156,7 +95,7 @@ func AdminKepala(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+		if err := db.Where("id_kepala = ?", ID).Take(&user); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Something went wrong",
@@ -188,7 +127,7 @@ func AdminKepala(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+		if err := db.Where("id_kepala = ?", ID).Take(&user); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Something went wrong",
@@ -282,7 +221,7 @@ func AdminKepala(db *gorm.DB, q *gin.Engine) {
 		ID, _ := c.Get("id")
 
 		var user model.Users
-		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+		if err := db.Where("id_kepala = ?", ID).Take(&user); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Something went wrong",
