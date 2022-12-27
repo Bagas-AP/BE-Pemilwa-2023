@@ -15,7 +15,7 @@ func AdminUser(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 
 	// get all user
-	r.GET("/admin/user", middleware.Authorization(), func(c *gin.Context) {
+	r.GET("/admin/mahasiswa", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
 
 		var user model.Users
