@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 func AdminKepala(db *gorm.DB, q *gin.Engine) {
@@ -189,8 +188,9 @@ func AdminKepala(db *gorm.DB, q *gin.Engine) {
 		//}
 
 		update := model.CalonKepala{
-			Nama: input.Nama,
-			Foto: input.Foto,
+			IDKepala: kepala.IDKepala,
+			Nama:     input.Nama,
+			Foto:     input.Foto,
 		}
 
 		if err := db.Select("*").Model(&kepala).Updates(update).Error; err != nil {
@@ -215,7 +215,7 @@ func AdminKepala(db *gorm.DB, q *gin.Engine) {
 		ID, _ := c.Get("id")
 
 		var user model.Users
-		if err := db.Where("id_kepala = ?", ID).Take(&user); err.Error != nil {
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Something went wrong",
@@ -236,36 +236,36 @@ func AdminKepala(db *gorm.DB, q *gin.Engine) {
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"message": "ID is not supplied.",
+				"Success": false,
+				"message": "id is not available",
 			})
 			return
 		}
 
-		parsedId, err := strconv.ParseUint(id, 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"message": "ID is invalid.",
-			})
-			return
-		}
+		var kepala model.CalonKepala
 
-		kepala := model.CalonKepala{
-			IDKepala: uint(parsedId),
-		}
-
-		if result := db.Delete(&kepala); result.Error != nil {
+		if result := db.Where("id_kepala = ?", id).Take(&kepala); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
-				"message": "Error when deleting from the database.",
+				"message": "Error when querying the database.",
 				"error":   result.Error.Error(),
 			})
 			return
 		}
+
+		if err := db.Delete(&kepala).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when deleting the database.",
+				"error":   err.Error(),
+			})
+			return
+		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"message": "Delete successful.",
+			"message": "delete completed.",
+			"data":    kepala,
 		})
 	})
 
