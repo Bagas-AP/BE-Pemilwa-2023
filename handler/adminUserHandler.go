@@ -14,6 +14,46 @@ import (
 func AdminUser(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 
+	// get all user
+	r.GET("/admin/user", middleware.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user model.Users
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if !user.ISAdmin {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "unauthorized access :(",
+				"error":   nil,
+			})
+			return
+		}
+
+		var users []model.Users
+		if res := db.Find(&users); res.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   res.Error.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "query completed.",
+			"users":   users,
+		})
+	})
+
 	// get mahasiswa by name or nim
 	r.POST("/admin/mahasiswa", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")

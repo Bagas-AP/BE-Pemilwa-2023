@@ -64,8 +64,8 @@ func main() {
 		}
 
 		newSenat := model.CalonSenat{
-			NamaSenat: inputSenat.NamaSenat,
-			Foto:      inputSenat.Foto,
+			Nama: inputSenat.Nama,
+			Foto: inputSenat.Foto,
 		}
 
 		if err := db.Create(&newSenat); err.Error != nil {
@@ -81,7 +81,7 @@ func main() {
 		c.JSON(http.StatusCreated, gin.H{
 			"message":    "successfully add new data",
 			"error":      nil,
-			"data":       newSenat.NamaSenat,
+			"data":       newSenat.Nama,
 			"statusCode": http.StatusCreated,
 		})
 	})
@@ -134,6 +134,7 @@ func main() {
 	handler.Vote(db, r)
 	handler.AdminUser(db, r)
 	handler.AdminKepala(db, r)
+	handler.AdminSenat(db, r)
 
 	if err := r.Run(":8081"); err != nil {
 		log.Fatal(err.Error())
