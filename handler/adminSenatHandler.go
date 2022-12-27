@@ -250,4 +250,63 @@ func AdminSenat(db *gorm.DB, q *gin.Engine) {
 
 	})
 
+	// untuk menghapus data senat by id
+	r.DELETE("/admin/senat/:id", middleware.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user model.Users
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if !user.ISAdmin {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "unauthorized access :(",
+				"error":   nil,
+			})
+			return
+		}
+
+		id, isIdExists := c.Params.Get("id")
+		if !isIdExists {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"Success": false,
+				"message": "id is not available",
+			})
+			return
+		}
+
+		var senat model.CalonSenat
+
+		if result := db.Where("id_senat = ?", id).Take(&senat); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		if err := db.Delete(&senat).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when deleting the database.",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "delete completed.",
+			"data":    senat,
+		})
+	})
+
 }
