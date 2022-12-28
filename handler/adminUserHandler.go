@@ -139,7 +139,8 @@ func AdminUser(db *gorm.DB, q *gin.Engine) {
 		if !user.ISAdmin {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "unauthorized access :(",
+				"message": "forbidden access :(",
+				"statusCode": http.StatusForbidden,
 				"error":   nil,
 			})
 			return
@@ -147,9 +148,11 @@ func AdminUser(db *gorm.DB, q *gin.Engine) {
 
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"Success": false,
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
 				"message": "id is not available",
+				"statusCode": http.StatusNotFound,	
+				"error": nil,
 			})
 			return
 		}
@@ -160,6 +163,7 @@ func AdminUser(db *gorm.DB, q *gin.Engine) {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
+				"statusCode": http.StatusInternalServerError,
 				"error":   result.Error.Error(),
 			})
 			return
@@ -168,6 +172,7 @@ func AdminUser(db *gorm.DB, q *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"message": "query completed.",
+			"statusCode": http.StatusOK,
 			"data":    mahasiswa,
 		})
 
@@ -182,6 +187,7 @@ func AdminUser(db *gorm.DB, q *gin.Engine) {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Something went wrong",
+				"statusCode": http.StatusInternalServerError,
 				"error":   err.Error.Error(),
 			})
 			return

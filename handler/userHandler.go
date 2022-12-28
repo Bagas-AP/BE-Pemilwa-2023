@@ -1,16 +1,18 @@
 package handler
 
 import (
+	"TestVote/middleware"
 	"TestVote/model"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
-	"github.com/joho/godotenv"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
+	"github.com/joho/godotenv"
+	"gorm.io/gorm"
 )
 
 func Login(db *gorm.DB, q *gin.Engine) {
@@ -104,6 +106,49 @@ func Login(db *gorm.DB, q *gin.Engine) {
 				"token": strToken,
 			},
 		})
-		return
+	})
+
+	r.GET("/profile", middleware.Authorization(), func(c *gin.Context) {
+		id, isIdExists := c.Get("id")
+
+		if !isIdExists {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": !isIdExists,
+				"message": "user belum registrasi",
+				"statusCode": http.StatusForbidden,
+				"error": nil,
+			})
+			return
+		}
+		
+		var user model.Users
+
+		err := db.Where("id = ?", id).Take(&user)
+		if err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H {
+				"success": false,
+				"message": "error ketika melakukan query data user",
+				"statusCode": http.StatusInternalServerError,
+				"error": err.Error.Error(),
+			})
+			return
+		}
+
+		if err.RowsAffected < 1 {
+			c.JSON(http.StatusNotFound, gin.H {
+				"success": false,
+				"message": "user tidak ditemukan",
+				"statusCode": http.StatusNotFound,
+				"error": nil,
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H {
+			"success": true,
+			"message": "data user ditemukan",
+			"statusCode": http.StatusOK,
+			"data": user,
+		})
 	})
 }

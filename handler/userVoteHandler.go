@@ -11,6 +11,7 @@ import (
 
 func Vote(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
+	// api untuk melakukan voting
 	r.POST("/vote", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
 
@@ -19,12 +20,35 @@ func Vote(db *gorm.DB, q *gin.Engine) {
 			CalonSenatID  *int `gorm:"default:null" json:"calonSenat"`
 		}
 
+		var cek model.Users
+
+		if search := db.Where("id = ?", ID).Take(&cek); search.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"statusCode": http.StatusInternalServerError,
+				"error":   search.Error.Error(),
+			})
+			return
+		}
+
+		if cek.IsVote {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Anda sudah memilih",
+				"statusCode": http.StatusForbidden,
+				"error": nil,
+			})
+			return
+		}
+
 		var input vote
 
 		if err := c.BindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "input is invalid",
+				"statusCode": http.StatusBadRequest,
 				"error":   err.Error(),
 			})
 			return
@@ -34,27 +58,8 @@ func Vote(db *gorm.DB, q *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "input is invalid",
+				"statusCode": http.StatusBadRequest,
 				"error":   "calon kepala dan calon senat tidak boleh kosong",
-			})
-			return
-		}
-
-		cek := model.Users{}
-
-		search := db.Where("id = ?", ID).Take(&cek)
-		if search = db.Where("id = ?", ID).Take(&cek); search.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"message": "Error when querying the database.",
-				"error":   search.Error.Error(),
-			})
-			return
-		}
-
-		if cek.IsVote == true {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"message": "Anda sudah memilih",
 			})
 			return
 		}
@@ -71,7 +76,8 @@ func Vote(db *gorm.DB, q *gin.Engine) {
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
-				"message": "Error when updating the database.",
+				"message": "error when updating mahasiswa data to database.",
+				"statusCode": http.StatusInternalServerError,
 				"error":   result.Error.Error(),
 			})
 			return
@@ -80,7 +86,8 @@ func Vote(db *gorm.DB, q *gin.Engine) {
 		if result = db.Where("id = ?", ID).Take(&mahasiswa); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
-				"message": "Error when querying the database.",
+				"message": "error when querying data mahasiswa from database.",
+				"statusCode": http.StatusInternalServerError,
 				"error":   result.Error.Error(),
 			})
 			return
@@ -90,17 +97,24 @@ func Vote(db *gorm.DB, q *gin.Engine) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"success": false,
 				"message": "mahasiswa not found.",
+				"statusCode": http.StatusNotFound,
+				"error": nil,
 			})
 			return
 		}
+
 		c.JSON(http.StatusCreated, gin.H{
 			"success":      true,
-			"message":      "successfully updated data.",
-			"NIM":          mahasiswa.NIM,
-			"Nama":         mahasiswa.Nama,
-			"voted":        mahasiswa.IsVote,
-			"Calon Kepala": mahasiswa.CalonKepalaID,
-			"Calon Senat":  mahasiswa.CalonSenatID,
+			"message":      "berhasil melakukan voting",
+			"data": gin.H {
+				"NIM":          mahasiswa.NIM,
+				"Nama":         mahasiswa.Nama,
+				"voted":        mahasiswa.IsVote,
+				"Calon Kepala": mahasiswa.CalonKepalaID,
+				"Calon Senat":  mahasiswa.CalonSenatID,
+			},
+			"statusCode": http.StatusCreated,
+			"error" : nil,
 		})
 	})
 }

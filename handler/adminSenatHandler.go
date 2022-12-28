@@ -59,7 +59,12 @@ func AdminSenat(db *gorm.DB, q *gin.Engine) {
 		var input Mahasiswa
 		err := c.ShouldBindJSON(&input)
 		if err != nil {
-			log.Println(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H {
+				"success": false,
+				"message": "format input Anda invalid",
+				"statusCode": http.StatusBadRequest,
+				"error": err.Error(),
+			})
 			return
 		}
 
@@ -69,6 +74,8 @@ func AdminSenat(db *gorm.DB, q *gin.Engine) {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
 				"message": "NIM anda tidak valid!",
+				"statusCode": http.StatusForbidden,
+				"error": nil,
 			})
 			return
 		}
@@ -111,7 +118,6 @@ func AdminSenat(db *gorm.DB, q *gin.Engine) {
 			"message": "Selamat Datang Calon Senat Baru!",
 			"data":    save,
 		})
-		return
 	})
 
 	// get calon senat by id

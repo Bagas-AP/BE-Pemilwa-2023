@@ -21,6 +21,7 @@ func Authorization() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "JWT validation error.",
+				"statusCode": http.StatusBadRequest,
 				"error":   err.Error(),
 			})
 			c.Abort()
@@ -34,6 +35,7 @@ func Authorization() gin.HandlerFunc {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
 				"message": "JWT invalid.",
+				"statusCode": http.StatusForbidden,
 				"error":   err.Error(),
 			})
 			c.Abort()

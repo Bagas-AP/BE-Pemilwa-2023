@@ -31,7 +31,10 @@ type User struct {
 
 // constructor
 func NewUser() User {
-	return User{c: colly.NewCollector(), LoginStatus: false}
+	return User{
+		c: colly.NewCollector(), 
+		LoginStatus: false,
+	}
 }
 
 func (s *User) Login(us string, ps string) error {

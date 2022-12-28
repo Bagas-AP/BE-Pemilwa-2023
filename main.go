@@ -12,9 +12,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var cORS = func() gin.HandlerFunc {
+// setting CORS Configuration untuk router
+var CORS = func() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // buat catatan "*" lebih diganti dengan url yang memiliki akses
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
@@ -27,22 +28,25 @@ var cORS = func() gin.HandlerFunc {
 }
 
 func main() {
+	// load .env file using godotenv library
 	if err := godotenv.Load(); err != nil {
 		log.Fatal(err.Error())
 	}
 
-	// Connect Database
+	// connect database
 	db := database.Open()
 	if db != nil {
 		println("Nice, DB Connected")
 	}
 
-	// Gin Framework
+	// Gin Framework (setting gin mode release or debug)
 	gin.SetMode(os.Getenv("GIN_MODE"))
 	r := gin.Default()
-	r.Use(cORS())
+	r.Use(CORS())
+
+	// check health router
 	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"message": "alive",
 		})
 	})
@@ -134,7 +138,7 @@ func main() {
 	handler.AdminKepala(db, r)
 	handler.AdminSenat(db, r)
 
-	if err := r.Run(":8081"); err != nil {
+	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err.Error())
 		return
 	}
